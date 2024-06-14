@@ -30,13 +30,14 @@ async function run() {
     await client.connect();
 
     const newsCollection = client.db('newsPaperDB').collection('news');
+    const userCollection = client.db('newsPaperDB').collection('users');
 
     // for showind all data in home
-
     app.get('/news', async (req, res) => {
       const result = await newsCollection.find().toArray();
       res.send(result)
     })
+
     // for detail articles api
     app.get('/news/:id', async (req, res) => {
       const id = req.params.id;
@@ -46,13 +47,15 @@ async function run() {
     });
 
     // ভিউ সংখ্যা আপডেটের জন্য API
-    app.put('/news/:id/view', async (req, res) => {
+    app.put('/news/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const update = { $inc: { views: 1 } };
       const result = await newsCollection.updateOne(query, update);
       res.send(result);
     });
+
+
 
     // for adding data from add article post method
     app.post('/addArticle', async (req, res) => {
@@ -63,6 +66,18 @@ async function run() {
 
     })
 
+    // users related api
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      const query = { email: user.email }
+      const exsitingerUser = await userCollection.findOne(query);
+      if (exsitingerUser) {
+        return res.send({ message: 'user already exists', insertedId: null })
+      }
+      const result = await userCollection.insertOne(user);
+      res.send(result)
+
+    })
 
 
 

@@ -32,6 +32,7 @@ async function run() {
 
     const newsCollection = client.db('newsPaperDB').collection('news');
     const userCollection = client.db('newsPaperDB').collection('users');
+    const paymentCollection = client.db('newsPaperDB').collection('payment');
 
 
     // jwt related api
@@ -99,7 +100,7 @@ async function run() {
     app.get('/users/admin/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
       if (email !== req.decoded.email) {
-        return res.status(403).send({ message: 'unauthorized access' })
+        return res.status(403).send({ message: 'forbidden access' })
       }
 
       const query = { email: email };
@@ -111,7 +112,7 @@ async function run() {
       res.send({ admin });
     })
 
-    app.patch('/users/admin/:id', async (req, res) => {
+    app.patch('/users/admin/:id', verifyToken, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updatedDoc = {
@@ -134,7 +135,7 @@ async function run() {
     })
 
     // users related api
-    app.get('/users', verifyToken, async (req, res) => {
+    app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result)
     })
@@ -150,6 +151,32 @@ async function run() {
       res.send(result)
 
     })
+
+    /* payment related apis for subscription */
+    app.post('/payment', async (req, res) => {
+      try {
+        const paymentInfo = req.body;
+        // Check if user has a pending plan
+        const isPendingPlan = await paymentCollection.findOne({ user: paymentInfo.user, status: 'pending' });
+
+        if (isPendingPlan) {
+          // Update pending payment if found any
+          const updated = await paymentCollection.updateOne(
+            { user: paymentInfo.user, status: 'pending' },
+            { $set: { ...paymentInfo } },
+            { upsert: true }
+          );
+          return res.send({ success: true, updated });
+        } else {
+          // Insert new payment info if no pending plan found
+          const inserted = await paymentCollection.insertOne(paymentInfo);
+          return res.send({ success: true, inserted });
+        }
+      } catch (error) {
+        console.error("Error processing payment:", error);
+        res.status(500).send({ success: false, message: "Internal Server Error" });
+      }
+    });
 
 
 

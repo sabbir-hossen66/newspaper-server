@@ -38,7 +38,7 @@ async function run() {
     // jwt related api
     app.post('/jwt', async (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '2h' });
       res.send({ token });
     })
 
@@ -97,14 +97,16 @@ async function run() {
 
     // dashboard related apies
     /* for making admin */
-    app.get('/users/admin/:email', verifyToken, async (req, res) => {
+    app.get('/users/admin/:email', async (req, res) => {
       const email = req.params.email;
-      if (email !== req.decoded.email) {
-        return res.status(403).send({ message: 'forbidden access' })
-      }
+
+      // if (email !== req.decoded.email) {
+      //   return res.status(403).send({ message: 'forbidden access' })
+      // }
 
       const query = { email: email };
       const user = await userCollection.findOne(query);
+      console.log('this is new', user);
       let admin = false;
       if (user) {
         admin = user?.role === 'admin'

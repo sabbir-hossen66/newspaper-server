@@ -80,6 +80,10 @@ async function run() {
     })
 
     // for showing publisher in home
+    app.get('/seePublisher', async (req, res) => {
+      const result = await publisherCollection.find().toArray();
+      res.send(result)
+    })
 
     // for detail articles api
     app.get('/news/:id', async (req, res) => {

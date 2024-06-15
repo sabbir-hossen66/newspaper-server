@@ -33,6 +33,7 @@ async function run() {
     const newsCollection = client.db('newsPaperDB').collection('news');
     const userCollection = client.db('newsPaperDB').collection('users');
     const paymentCollection = client.db('newsPaperDB').collection('payment');
+    const publisherCollection = client.db('newsPaperDB').collection('publisher');
 
 
     // jwt related api
@@ -72,11 +73,13 @@ async function run() {
 
 
 
-    // for showind all data in home
+    // for showind all data in article
     app.get('/news', async (req, res) => {
       const result = await newsCollection.find().toArray();
       res.send(result)
     })
+
+    // for showing publisher in home
 
     // for detail articles api
     app.get('/news/:id', async (req, res) => {
@@ -135,6 +138,14 @@ async function run() {
       res.send(result)
 
     })
+
+    // for adding addPublisher api
+    app.post('/addPublisher', async (req, res) => {
+      const item = req.body;
+      const result = await publisherCollection.insertOne(item);
+      res.send(result)
+    })
+
 
     // users related api
     app.get('/users', verifyToken, verifyAdmin, async (req, res) => {

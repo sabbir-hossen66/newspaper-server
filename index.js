@@ -71,6 +71,14 @@ async function run() {
       next();
     }
 
+    // for showin my;
+    app.get('/myNews', async (req, res) => {
+      const authorEmail = req.query.authorEmail;
+      const query = { authorEmail: authorEmail };
+      const result = await newsCollection.find(query).toArray();
+      res.send(result)
+
+    })
 
 
     // for showind all data in article

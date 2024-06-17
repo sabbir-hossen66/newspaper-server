@@ -4,13 +4,13 @@ const cors = require('cors')
 const jwt = require('jsonwebtoken')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const port = process.env.PORT || 5000;
 
 
 // middleware
 app.use(cors())
 app.use(express.json())
-
 
 
 
@@ -34,6 +34,7 @@ async function run() {
     const userCollection = client.db('newsPaperDB').collection('users');
     const paymentCollection = client.db('newsPaperDB').collection('payment');
     const publisherCollection = client.db('newsPaperDB').collection('publisher');
+
 
 
     // jwt related api
@@ -71,7 +72,7 @@ async function run() {
       next();
     }
 
-    // for showin my;
+    // for showin myArticles;
     app.get('/myNews', async (req, res) => {
       const authorEmail = req.query.authorEmail;
       const query = { authorEmail: authorEmail };
@@ -177,31 +178,72 @@ async function run() {
 
     })
 
-    /* payment related apis for subscription */
-    app.post('/payment', async (req, res) => {
-      try {
-        const paymentInfo = req.body;
-        // Check if user has a pending plan
-        const isPendingPlan = await paymentCollection.findOne({ user: paymentInfo.user, status: 'pending' });
 
-        if (isPendingPlan) {
-          // Update pending payment if found any
-          const updated = await paymentCollection.updateOne(
-            { user: paymentInfo.user, status: 'pending' },
-            { $set: { ...paymentInfo } },
-            { upsert: true }
-          );
-          return res.send({ success: true, updated });
-        } else {
-          // Insert new payment info if no pending plan found
-          const inserted = await paymentCollection.insertOne(paymentInfo);
-          return res.send({ success: true, inserted });
+    /* delete method implement */
+    app.delete('/myArticle/:id', verifyToken, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await newsCollection.deleteOne(query);
+      res.send(result);
+    })
+
+    /* updated method  */
+
+    app.get('/myarticle/:id', async (req, res) => {
+      const id = req.params.id
+      const query = { _id: new ObjectId(id) }
+      const result = await newsCollection.findOne(query)
+      res.send(result)
+    })
+
+    app.patch('/myArticle/:id', async (req, res) => {
+      const item = req.body;
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) }
+      const updatedDoc = {
+        $set: {
+          title: item.title,
+          authorName: item.authorName,
+          // status: item.status,
+          authorPhoto: item.authorPhoto,
+          authorEmail: item.authorEmail,
+          image: item.image,
+          description: item.description,
+          publisher: item.publisher,
+          tags: item.tags
         }
-      } catch (error) {
-        console.error("Error processing payment:", error);
-        res.status(500).send({ success: false, message: "Internal Server Error" });
       }
-    });
+
+      const result = await newsCollection.updateOne(filter, updatedDoc)
+      res.send(result);
+    })
+
+
+
+
+
+    /* jkr from payment */
+
+    //payment intent
+
+
+    // app.post('/create-payment-intent', verifyToken, async (req, res) => {
+    //   const { price } = req.body;
+    //   const amount = parseInt(price * 100);
+    //   console.log('amount in side intentt', amount);
+
+    //   const paymentIntent = await stripe.paymentIntents.create({
+    //     amount: amount,
+    //     currency: 'usd',
+    //     payment_method_types: ['card']
+    //   })
+    //   console.log(paymentIntent);
+    //   res.send({
+    //     clientSecret: paymentIntent.client_secret
+    //   })
+    // })
+
+
 
 
 

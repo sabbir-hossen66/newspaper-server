@@ -111,7 +111,7 @@ async function run() {
       res.send(result);
     });
 
-    // dashboard related apies
+    // dashboard  apies
     /* for making admin */
     app.get('/users/admin/:email', async (req, res) => {
       const email = req.params.email;
@@ -161,10 +161,11 @@ async function run() {
 
 
     // users related api
-    app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
+    app.get('/users', async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result)
     })
+
 
     app.post('/users', async (req, res) => {
       const user = req.body;
@@ -227,21 +228,21 @@ async function run() {
     //payment intent
 
 
-    // app.post('/create-payment-intent', verifyToken, async (req, res) => {
-    //   const { price } = req.body;
-    //   const amount = parseInt(price * 100);
-    //   console.log('amount in side intentt', amount);
+    app.post('/create-payment-intent', verifyToken, async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+      console.log('amount in side intentt', amount);
 
-    //   const paymentIntent = await stripe.paymentIntents.create({
-    //     amount: amount,
-    //     currency: 'usd',
-    //     payment_method_types: ['card']
-    //   })
-    //   console.log(paymentIntent);
-    //   res.send({
-    //     clientSecret: paymentIntent.client_secret
-    //   })
-    // })
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card']
+      })
+      console.log(paymentIntent);
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
+    })
 
 
 
